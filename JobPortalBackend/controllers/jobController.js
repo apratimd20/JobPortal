@@ -1,8 +1,6 @@
 import Job from "../models/Job.js";
 
-// @desc    Get all jobs (public - no auth required)
-// @route   GET /api/jobs
-// @access  Public
+
 export const getAllJobs = async (req, res) => {
   try {
     const {
@@ -16,10 +14,10 @@ export const getAllJobs = async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
-    // Build filter object
+   
     let filter = {};
 
-    // Search in title, company, description, skills
+   
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -29,33 +27,32 @@ export const getAllJobs = async (req, res) => {
       ];
     }
 
-    // Filter by location
+ 
     if (location) {
       filter.location = { $regex: location, $options: 'i' };
     }
 
-    // Filter by job type
     if (jobType) {
       filter.jobType = jobType;
     }
 
-    // Filter by experience
+    
     if (experience) {
       filter.experience = experience;
     }
 
-    // Sort configuration
+   
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // Execute query with pagination
+    
     const jobs = await Job.find(filter)
       .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .select('-__v'); // Exclude version key
+      .select('-__v'); 
 
-    // Get total count for pagination
+  
     const total = await Job.countDocuments(filter);
 
     res.status(200).json({
@@ -76,9 +73,7 @@ export const getAllJobs = async (req, res) => {
   }
 };
 
-// @desc    Get single job by ID
-// @route   GET /api/jobs/:id
-// @access  Public
+
 export const getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -112,9 +107,7 @@ export const getJobById = async (req, res) => {
   }
 };
 
-// @desc    Get jobs by company
-// @route   GET /api/jobs/company/:company
-// @access  Public
+
 export const getJobsByCompany = async (req, res) => {
   try {
     const { company } = req.params;
@@ -149,9 +142,7 @@ export const getJobsByCompany = async (req, res) => {
   }
 };
 
-// @desc    Get unique job locations
-// @route   GET /api/jobs/locations
-// @access  Public
+
 export const getJobLocations = async (req, res) => {
   try {
     const locations = await Job.distinct('location');
@@ -171,9 +162,7 @@ export const getJobLocations = async (req, res) => {
   }
 };
 
-// @desc    Get unique job types
-// @route   GET /api/jobs/job-types
-// @access  Public
+
 export const getJobTypes = async (req, res) => {
   try {
     const jobTypes = await Job.distinct('jobType');
@@ -193,9 +182,8 @@ export const getJobTypes = async (req, res) => {
   }
 };
 
-// @desc    Get unique experience levels
-// @route   GET /api/jobs/experience-levels
-// @access  Public
+
+
 export const getExperienceLevels = async (req, res) => {
   try {
     const experiences = await Job.distinct('experience');
@@ -215,9 +203,7 @@ export const getExperienceLevels = async (req, res) => {
   }
 };
 
-// @desc    Get featured jobs (most recent)
-// @route   GET /api/jobs/featured
-// @access  Public
+
 export const getFeaturedJobs = async (req, res) => {
   try {
     const { limit = 6 } = req.query;
@@ -242,9 +228,7 @@ export const getFeaturedJobs = async (req, res) => {
   }
 };
 
-// @desc    Search jobs with advanced filtering
-// @route   GET /api/jobs/search/advanced
-// @access  Public
+
 export const advancedSearch = async (req, res) => {
   try {
     const {
