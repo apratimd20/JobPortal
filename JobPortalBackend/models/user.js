@@ -21,8 +21,8 @@ const userSchema = new  mongoose.Schema({
     },
     role:{
         type:String,
-        enum:["candidate","recruiter"],
-        default:"candidate",
+        enum:["jobseeker","jobprovider"],
+        default:"jobseeker",
     }
     ,savedJobs:[
         {
@@ -36,7 +36,7 @@ const userSchema = new  mongoose.Schema({
             ref:"Job",
         },
     ],
-    Timestamp:true,
-})
-
+  
+}, { timestamps:true})
+    
 export default mongoose.model("user",userSchema)

@@ -2,6 +2,7 @@ import express from 'express'
 import connectDB from './config/db.js';
 import { fetchJobsFromAPI } from './services/fetchJobs.js';
 import jobRoutes from './routes/jobRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 import cors from 'cors'
 
 import './corn/fetchCorn.js'
@@ -43,6 +44,7 @@ app.get("/", (req, res) => {
 
 
 app.use('/api/jobs', jobRoutes);
+app.use('/api/auth', userRoutes);
 
 app.listen(Port, () => {
   console.log("Server is running on the port 5000");

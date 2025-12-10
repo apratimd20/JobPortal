@@ -16,10 +16,41 @@ const JobPortal = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Check localStorage on initial load
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (token && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser({
+          name: userData.name,
+          email: userData.email,
+          userType: userData.role || userData.userType,
+          initials: userData.name 
+            ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            : 'U',
+          token: token,
+          _id: userData._id,
+          ...userData
+        });
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
 
   const fetchJobs = async (page = 1, search = "", location = "") => {
     try {
@@ -115,25 +146,39 @@ const JobPortal = () => {
     fetchJobs(currentPage, searchTerm, locationFilter);
   };
 
-  const handleLogin = (name, email) => {
+  // FIXED: Accept user object instead of name, email parameters
+  const handleLogin = (userData) => {
     setUser({
-      name: name,
-      email: email,
-      initials: name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2),
+      name: userData.name,
+      email: userData.email,
+      userType: userData.userType || userData.role,
+      initials: userData.initials || userData.name
+        ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        : 'U',
+      token: userData.token,
+      _id: userData._id,
+      ...userData
     });
     setShowAuthModal(false);
   };
 
   const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Clear state
     setUser(null);
+    setSavedJobs([]);
+    
+    console.log('User logged out successfully');
   };
 
   const handleApplyJob = (job) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     alert(`Applying for: ${job.title} at ${job.company}`);
   };
 
@@ -177,11 +222,11 @@ const JobPortal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Auth Modal */}
+     
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onLogin={handleLogin}
+        onLogin={handleLogin} // This now correctly passes the user object
       />
 
       {/* Navbar */}

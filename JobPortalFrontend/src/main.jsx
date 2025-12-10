@@ -6,7 +6,7 @@ import JobPortal from './JobPortal.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* <App /> */}
-    <JobPortal/>
+    <App />
+    {/* <JobPortal/> */}
   </StrictMode>,
 )
