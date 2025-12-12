@@ -17,7 +17,7 @@ const JobPortal = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [user, setUser] = useState(() => {
-    // Check localStorage on initial load
+   
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
@@ -25,7 +25,7 @@ const JobPortal = () => {
 
   const baseURL = import.meta.env.VITE_API_BASE_URL;
 
-  // Check if user is logged in on component mount
+  
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -66,7 +66,7 @@ const JobPortal = () => {
       if (location) params.append("location", location);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const response = await fetch(`${baseURL}/jobs?${params.toString()}`, {
         method: "GET",
@@ -146,7 +146,7 @@ const JobPortal = () => {
     fetchJobs(currentPage, searchTerm, locationFilter);
   };
 
-  // FIXED: Accept user object instead of name, email parameters
+ 
   const handleLogin = (userData) => {
     setUser({
       name: userData.name,
@@ -163,11 +163,11 @@ const JobPortal = () => {
   };
 
   const handleLogout = () => {
-    // Clear localStorage
+   
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
-    // Clear state
+ 
     setUser(null);
     setSavedJobs([]);
     

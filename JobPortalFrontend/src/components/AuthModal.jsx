@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Loader2, Eye, EyeOff, Briefcase, Search } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const AuthModal = ({ isOpen, onClose, onLogin }) => {
   const [activeTab, setActiveTab] = useState('login'); 
@@ -7,16 +8,13 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // Base URL configuration
   const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
   
-  // Login form state
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
   });
   
-  // Register form states (simplified for job seeker)
   const [jobSeekerForm, setJobSeekerForm] = useState({
     name: '',
     email: '',
@@ -46,7 +44,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     setLoading(true);
     setLoginError('');
     
-    // Validation
     if (!loginForm.email || !loginForm.password) {
       setLoginError('Please fill in all fields');
       setLoading(false);
@@ -54,7 +51,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     }
     
     try {
-      // API call for login
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
@@ -83,15 +79,11 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         throw new Error(result.message || 'Login failed');
       }
       
-      // Store token and user data in localStorage
       const userData = result.data;
-      
-      console.log('Login successful:', userData);
       
       localStorage.setItem('token', userData.token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      // Prepare user data for frontend
       const frontendUserData = {
         name: userData.name,
         email: userData.email,
@@ -103,16 +95,21 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         _id: userData._id
       };
       
-      // Call onLogin with user data
+      toast.success(`Welcome back, ${userData.name}!`, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
       onLogin(frontendUserData);
       
-      // Clear forms and close modal
       clearForms();
       onClose();
       
     } catch (error) {
-      console.error('Login error:', error);
-      
       if (error.name === 'AbortError') {
         setLoginError('Request timeout. Please check your connection and try again.');
       } else if (error.message.includes('HTTP error')) {
@@ -122,6 +119,15 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       } else {
         setLoginError(error.message || 'Login failed. Please check your credentials and try again.');
       }
+      
+      toast.error(error.message || 'Login failed. Please check your credentials.', {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -137,7 +143,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       let additionalData = {};
       
       if (userType === 'jobSeeker') {
-        // Job Seeker validation (simplified)
         if (!jobSeekerForm.name || !jobSeekerForm.email || !jobSeekerForm.password || !jobSeekerForm.confirmPassword) {
           throw new Error('Please fill in all required fields');
         }
@@ -150,7 +155,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           throw new Error('Password must be at least 6 characters');
         }
         
-        // Prepare data for registration
         userData = {
           name: jobSeekerForm.name,
           email: jobSeekerForm.email,
@@ -159,7 +163,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         };
         
       } else {
-        // Job Provider validation
         if (!jobProviderForm.companyName || !jobProviderForm.email || !jobProviderForm.password || 
             !jobProviderForm.confirmPassword || !jobProviderForm.contactPerson) {
           throw new Error('Please fill in all required fields');
@@ -173,7 +176,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           throw new Error('Password must be at least 6 characters');
         }
         
-        // Use company name as name field for registration
         userData = {
           name: jobProviderForm.companyName,
           email: jobProviderForm.email,
@@ -181,7 +183,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           role: 'jobprovider'
         };
         
-        // Additional job provider data to save after registration
         additionalData = {
           companyName: jobProviderForm.companyName,
           contactPerson: jobProviderForm.contactPerson,
@@ -192,7 +193,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         };
       }
       
-      // API call for registration
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       
@@ -218,15 +218,11 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         throw new Error(result.message || 'Registration failed');
       }
       
-      // Store token and user data in localStorage
       let registeredUser = result.data;
-      
-      console.log('Registration successful:', registeredUser);
       
       localStorage.setItem('token', registeredUser.token);
       localStorage.setItem('user', JSON.stringify(registeredUser));
       
-      // If there's additional data to save (for job provider), make another API call
       if (userType === 'jobProvider' && Object.keys(additionalData).length > 0) {
         try {
           const updateResponse = await fetch(`${baseURL}/auth/update-profile/${registeredUser._id}`, {
@@ -241,7 +237,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           if (updateResponse.ok) {
             const updateData = await updateResponse.json();
             if (updateData.success) {
-              // Update stored user data with additional fields
               const updatedUser = { ...registeredUser, ...additionalData };
               localStorage.setItem('user', JSON.stringify(updatedUser));
               registeredUser = updatedUser;
@@ -249,11 +244,9 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           }
         } catch (updateError) {
           console.warn('Could not save additional profile data:', updateError);
-          // Continue with registration even if additional data save fails
         }
       }
       
-      // Prepare user data for frontend
       const frontendUserData = {
         name: registeredUser.name,
         email: registeredUser.email,
@@ -266,16 +259,25 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         ...(userType === 'jobProvider' ? additionalData : {})
       };
       
-      // Call onLogin with user data
+      const successMessage = userType === 'jobSeeker' 
+        ? `Welcome to JobPortal, ${registeredUser.name}! Your job seeker account has been created successfully.`
+        : `Welcome to JobPortal, ${registeredUser.name}! Your job provider account has been created successfully.`;
+      
+      toast.success(successMessage, {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
       onLogin(frontendUserData);
       
-      // Clear forms and close modal
       clearForms();
       onClose();
       
     } catch (error) {
-      console.error('Registration error:', error);
-      
       if (error.name === 'AbortError') {
         setRegisterError('Request timeout. Please check your connection and try again.');
       } else if (error.message.includes('HTTP error')) {
@@ -285,6 +287,15 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       } else {
         setRegisterError(error.message || 'Registration failed. Please try again.');
       }
+      
+      toast.error(error.message || 'Registration failed. Please try again.', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -334,7 +345,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           Welcome to JobPortal
         </h2>
         
-        {/* Tabs */}
         <div className="flex mb-6 border-b border-slate-200">
           <button
             onClick={() => setActiveTab('login')}
@@ -358,7 +368,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           </button>
         </div>
         
-        {/* User Type Selection (for both login and register) */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-slate-700 mb-2 text-left">
             I am a:
@@ -391,7 +400,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           </div>
         </div>
         
-        {/* Login Form */}
         {activeTab === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             {loginError && (
@@ -468,7 +476,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           </form>
         )}
         
-        {/* Register Form - Job Seeker (Simplified) */}
         {activeTab === 'register' && userType === 'jobSeeker' && (
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             {registerError && (
@@ -586,7 +593,6 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           </form>
         )}
         
-        {/* Register Form - Job Provider */}
         {activeTab === 'register' && userType === 'jobProvider' && (
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             {registerError && (
