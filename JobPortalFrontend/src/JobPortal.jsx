@@ -226,10 +226,10 @@ const JobPortal = () => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onLogin={handleLogin} // This now correctly passes the user object
+        onLogin={handleLogin} 
       />
 
-      {/* Navbar */}
+      
       <Navbar
         user={user}
         onLogout={handleLogout}
@@ -237,7 +237,7 @@ const JobPortal = () => {
         onHomeClick={handleHomeClick}
       />
 
-      {/* Hero Section */}
+      
       <HeroSection
         searchTerm={searchTerm}
         locationFilter={locationFilter}
@@ -247,14 +247,14 @@ const JobPortal = () => {
         onKeyPress={handleKeyPress}
       />
 
-      {/* Stats Section */}
+  
       <StatsSection
         totalJobs={totalJobs}
         uniqueCompanies={new Set(jobs.map((j) => j.company)).size}
         savedJobs={savedJobs.length}
       />
 
-      {/* Job Listings */}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -269,10 +269,10 @@ const JobPortal = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-2 text-slate-700 hover:text-blue-600 transition-colors border border-slate-300 px-4 py-2 rounded-lg hover:border-blue-600">
+            {/* <button className="flex items-center space-x-2 text-slate-700 hover:text-blue-600 transition-colors border border-slate-300 px-4 py-2 rounded-lg hover:border-blue-600">
               <Filter className="h-5 w-5" />
               <span className="font-medium">Filters</span>
-            </button>
+            </button> */}
 
             <div className="text-sm text-slate-600">
               Page {currentPage} of {totalPages}
@@ -280,7 +280,7 @@ const JobPortal = () => {
           </div>
         </div>
 
-        {/* Loading State */}
+      
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
@@ -306,7 +306,7 @@ const JobPortal = () => {
           </div>
         )}
 
-        {/* Jobs Grid */}
+       
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -323,7 +323,6 @@ const JobPortal = () => {
               ))}
             </div>
 
-            {/* Enhanced Pagination */}
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row justify-between items-center mt-12 space-y-4 sm:space-y-0">
                 <div className="text-sm text-slate-600">

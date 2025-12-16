@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Briefcase, User, LogIn, Bookmark, Briefcase as BriefcaseIcon, LogOut, Settings, Bell } from 'lucide-react';
+import { Briefcase, User, Bookmark, Briefcase as BriefcaseIcon, LogOut, Settings, Bell } from 'lucide-react';
 
 const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -14,45 +13,42 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-20 border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div 
-            className="flex items-center space-x-3 cursor-pointer group"
+          <div
+            className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group"
             onClick={onHomeClick}
           >
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-              <Briefcase className="h-6 w-6 text-white" />
+              <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               JobPortal
             </span>
           </div>
-          
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
               <div className="relative" ref={dropdownRef}>
-                <button 
+                <button
                   className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
                     {user.initials}
                   </div>
-                  <span className="font-medium text-slate-700 hidden md:inline">
+                  <span className="font-medium text-slate-700 hidden lg:inline">
                     {user.name}
                   </span>
                 </button>
-                
+
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-10 animate-in fade-in slide-in-from-top-2">
-                    {/* User Info */}
+                  <div className="absolute right-0 mt-2 w-72 sm:w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-10">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
@@ -68,11 +64,10 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                       </div>
                     </div>
 
-                    {/* Dropdown Items */}
                     <div className="py-2">
                       <a
                         href="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <User className="h-4 w-4 mr-3 text-slate-400" />
@@ -81,67 +76,31 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
 
                       {user.userType === 'jobseeker' ? (
                         <>
-                          <button
-                            onClick={() => {
-                              alert('Saved Jobs: Coming Soon!');
-                              setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                          >
+                          <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <Bookmark className="h-4 w-4 mr-3 text-slate-400" />
                             Saved Jobs
-                            <span className="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                              12
-                            </span>
                           </button>
-                          <button
-                            onClick={() => {
-                              alert('Applied Jobs: Coming Soon!');
-                              setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                          >
+                          <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <BriefcaseIcon className="h-4 w-4 mr-3 text-slate-400" />
                             Applied Jobs
-                            <span className="ml-auto bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                              5
-                            </span>
                           </button>
                         </>
                       ) : (
                         <>
-                          <button
-                            onClick={() => {
-                              alert('My Job Listings: Coming Soon!');
-                              setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                          >
+                          <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <BriefcaseIcon className="h-4 w-4 mr-3 text-slate-400" />
                             My Job Listings
-                            <span className="ml-auto bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                              8
-                            </span>
                           </button>
-                          <button
-                            onClick={() => {
-                              alert('Applications: Coming Soon!');
-                              setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                          >
+                          <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <Bell className="h-4 w-4 mr-3 text-slate-400" />
                             Applications
-                            <span className="ml-auto bg-orange-100 text-orange-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                              24
-                            </span>
                           </button>
                         </>
                       )}
 
                       <a
                         href="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <Settings className="h-4 w-4 mr-3 text-slate-400" />
@@ -149,14 +108,10 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                       </a>
                     </div>
 
-                    {/* Logout */}
                     <div className="border-t border-slate-100 pt-2">
                       <button
-                        onClick={() => {
-                          onLogout();
-                          setDropdownOpen(false);
-                        }}
-                        className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                        onClick={onLogout}
+                        className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
                         <LogOut className="h-4 w-4 mr-3" />
                         Logout
@@ -168,10 +123,10 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
             ) : (
               <button
                 onClick={onLoginClick}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-md hover:shadow-lg"
+                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium shadow-md"
               >
                 <User className="h-5 w-5" />
-                <span>Login/Register</span>
+                <span className="hidden sm:inline">Login/Register</span>
               </button>
             )}
           </div>
