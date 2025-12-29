@@ -9,6 +9,7 @@ import Login from './components/Login.jsx';
 import Register from './components/Register.jsx';
 import JobPortal from './JobPortal.jsx';
 import JobDetails from './components/JobDetails.jsx';
+import SavedJobs from './components/SavedJobs.jsx';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -40,6 +41,7 @@ function App() {
           <Routes>
             <Route path="/" element={<JobPortal />} />
             <Route path="/job/:id" element={<JobDetails />} />
+            <Route path="/saved-jobs" element={<SavedJobs />} />
             {/* <Route path="/login" element={<Login />} />
           <Route path='/register' element ={<Register/>}/> */}
           </Routes>

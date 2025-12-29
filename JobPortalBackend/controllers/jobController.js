@@ -256,30 +256,29 @@ export const advancedSearch = async (req, res) => {
       ];
     }
 
-    // Location filter
+    
     if (location) {
       filter.location = { $regex: location, $options: 'i' };
     }
 
-    // Job type filter
+    
     if (jobType) {
       filter.jobType = jobType;
     }
 
-    // Experience filter
+    
     if (experience) {
       filter.experience = experience;
     }
 
-    // Skills filter
+   
     if (skills) {
       const skillsArray = skills.split(',').map(skill => skill.trim());
       filter.skills = { $in: skillsArray.map(skill => new RegExp(skill, 'i')) };
     }
 
-    // Salary range filter (if salary field contains numeric values)
+    
     if (minSalary || maxSalary) {
-      // This is a basic implementation - you might need to adjust based on your salary format
       filter.salary = {};
       if (minSalary) filter.salary.$gte = minSalary;
       if (maxSalary) filter.salary.$lte = maxSalary;

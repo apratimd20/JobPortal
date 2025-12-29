@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Briefcase, User, Bookmark, Briefcase as BriefcaseIcon, LogOut, Settings, Bell } from 'lucide-react';
 
 const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
@@ -76,10 +77,14 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
 
                       {user.userType === 'jobseeker' ? (
                         <>
-                          <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                          <Link
+                            to="/saved-jobs"
+                            className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                            onClick={() => setDropdownOpen(false)}
+                          >
                             <Bookmark className="h-4 w-4 mr-3 text-slate-400" />
                             Saved Jobs
-                          </button>
+                          </Link>
                           <button className="w-full text-left flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <BriefcaseIcon className="h-4 w-4 mr-3 text-slate-400" />
                             Applied Jobs
