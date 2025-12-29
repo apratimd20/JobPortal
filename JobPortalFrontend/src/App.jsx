@@ -10,6 +10,8 @@ import Register from './components/Register.jsx';
 import JobPortal from './JobPortal.jsx';
 import JobDetails from './components/JobDetails.jsx';
 import SavedJobs from './components/SavedJobs.jsx';
+import Profile from './components/Profile.jsx';
+import Settings from './components/Settings.jsx';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -42,6 +44,8 @@ function App() {
             <Route path="/" element={<JobPortal />} />
             <Route path="/job/:id" element={<JobDetails />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             {/* <Route path="/login" element={<Login />} />
           <Route path='/register' element ={<Register/>}/> */}
           </Routes>
@@ -53,3 +57,4 @@ function App() {
 }
 
 export default App
+

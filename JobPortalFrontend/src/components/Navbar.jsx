@@ -66,14 +66,14 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                     </div>
 
                     <div className="py-2">
-                      <a
-                        href="/profile"
+                      <Link
+                        to="/profile"
                         className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <User className="h-4 w-4 mr-3 text-slate-400" />
                         My Profile
-                      </a>
+                      </Link>
 
                       {user.userType === 'jobseeker' ? (
                         <>
@@ -103,14 +103,14 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                         </>
                       )}
 
-                      <a
-                        href="/settings"
+                      <Link
+                        to="/settings"
                         className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <Settings className="h-4 w-4 mr-3 text-slate-400" />
                         Settings
-                      </a>
+                      </Link>
                     </div>
 
                     <div className="border-t border-slate-100 pt-2">
