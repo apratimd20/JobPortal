@@ -1,14 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Building2, Bookmark, ChevronRight } from 'lucide-react';
 
-const JobCard = ({ 
-  job, 
-  isSaved, 
-  onSaveClick, 
-  onApplyClick, 
+const JobCard = ({
+  job,
+  isSaved,
+  onSaveClick,
+  onApplyClick,
   showAuthModal,
-  user 
+  user
 }) => {
+  const navigate = useNavigate();
+
   const getInitials = (company) => {
     return company
       .split(' ')
@@ -23,15 +26,19 @@ const JobCard = ({
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 1) return '1 day ago';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
+  const handleCardClick = () => {
+    navigate(`/job/${job._id}`);
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all border border-slate-200 overflow-hidden group cursor-pointer">
+    <div onClick={handleCardClick} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all border border-slate-200 overflow-hidden group cursor-pointer">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start space-x-4 flex-1">
@@ -45,7 +52,7 @@ const JobCard = ({
               <p className="text-slate-600 font-medium text-sm">{job.company}</p>
             </div>
           </div>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -58,11 +65,10 @@ const JobCard = ({
             className="ml-2"
           >
             <Bookmark
-              className={`h-5 w-5 transition-all ${
-                isSaved
-                  ? 'fill-blue-600 text-blue-600'
-                  : 'text-slate-400 hover:text-blue-600'
-              }`}
+              className={`h - 5 w - 5 transition - all ${isSaved
+                ? 'fill-blue-600 text-blue-600'
+                : 'text-slate-400 hover:text-blue-600'
+                } `}
             />
           </button>
         </div>
@@ -108,7 +114,7 @@ const JobCard = ({
 
         <div className="flex items-center justify-between pt-4 border-t border-slate-200">
           <span className="text-xs text-slate-500">{formatDate(job.dateFetched)}</span>
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               if (!user) {

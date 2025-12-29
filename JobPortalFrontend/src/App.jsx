@@ -8,28 +8,44 @@ import HeroSection from './components/HeroSection.jsx';
 import Login from './components/Login.jsx';
 import Register from './components/Register.jsx';
 import JobPortal from './JobPortal.jsx';
+import JobDetails from './components/JobDetails.jsx';
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
-  
+
 
   return (
     <>
-    <div>
-      {/* <Navbar
+      <div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+        {/* <Navbar
               user={user}
               onLogout={handleLogout}
               onLoginClick={() => setShowAuthModal(true)}
               onHomeClick={handleHomeClick}
             /> */}
-      <Router>
-        <Routes>
-          <Route path="/" element={<JobPortal />} />
-          {/* <Route path="/login" element={<Login />} />
+        <Router>
+          <Routes>
+            <Route path="/" element={<JobPortal />} />
+            <Route path="/job/:id" element={<JobDetails />} />
+            {/* <Route path="/login" element={<Login />} />
           <Route path='/register' element ={<Register/>}/> */}
-        </Routes>
-      </Router>
-    </div>
-    
+          </Routes>
+        </Router>
+      </div>
+
     </>
   )
 }

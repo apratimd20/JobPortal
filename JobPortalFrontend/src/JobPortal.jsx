@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Filter, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from 'react-toastify';
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import AuthModal from "./components/AuthModal";
@@ -17,30 +18,30 @@ const JobPortal = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [user, setUser] = useState(() => {
-   
+
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
 
-  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const baseURL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
 
-  
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
-    if (token && storedUser) {
+
+    if (storedToken && storedUser) {
       try {
         const userData = JSON.parse(storedUser);
         setUser({
           name: userData.name,
           email: userData.email,
           userType: userData.role || userData.userType,
-          initials: userData.name 
+          initials: userData.name
             ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
             : 'U',
-          token: token,
+          token: storedToken,
           _id: userData._id,
           ...userData
         });
@@ -57,40 +58,85 @@ const JobPortal = () => {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-      });
+      // If showing saved jobs only, we hit a different endpoint and ignore search/pagination for now (or implementing client side/server side filtering for saved jobs would be better, but assuming simple list return for saved jobs from backend as implemented)
+      if (showSavedOnly) {
+        if (!user || !user.token) {
+          console.warn('User not logged in or missing token');
+          setJobs([]);
+          setTotalJobs(0);
+          setTotalPages(1);
+          setLoading(false);
+          return;
+        }
 
-      if (search) params.append("search", search);
-      if (location) params.append("location", location);
+        console.log('Fetching saved jobs with token:', user.token);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const response = await fetch(`${baseURL}/users/saved-jobs`, {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-      const response = await fetch(`${baseURL}/jobs?${params.toString()}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-      });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-      clearTimeout(timeoutId);
+        const data = await response.json();
+        if (data.success) {
+          // The backend returns populated savedJobs array
+          let filteredJobs = data.data;
+          // We can manually filter by search term here if needed since backend endpoint for saved-jobs might not support it yet
+          if (search) {
+            filteredJobs = filteredJobs.filter(job => job.title.toLowerCase().includes(search.toLowerCase()) || job.company.toLowerCase().includes(search.toLowerCase()));
+          }
+          if (location) {
+            filteredJobs = filteredJobs.filter(job => job.location.toLowerCase().includes(location.toLowerCase()));
+          }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setJobs(data.data);
-        setTotalPages(data.pages);
-        setTotalJobs(data.total);
-        setCurrentPage(data.page);
+          setJobs(filteredJobs);
+          // Pagination for saved jobs is not implemented in backend yet, so we just show all or slice them.
+          // For now, let's treat it as one page.
+          setTotalJobs(filteredJobs.length);
+          setTotalPages(1);
+        }
       } else {
-        throw new Error("Failed to fetch jobs");
+        // Regular fetch
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: "10",
+        });
+
+        if (search) params.append("search", search);
+        if (location) params.append("location", location);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch(`${baseURL}/jobs?${params.toString()}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setJobs(data.data);
+          setTotalPages(data.pages);
+          setTotalJobs(data.total);
+          setCurrentPage(data.page);
+        } else {
+          throw new Error("Failed to fetch jobs");
+        }
       }
     } catch (err) {
       console.error("Error fetching jobs:", err);
@@ -117,7 +163,7 @@ const JobPortal = () => {
 
   useEffect(() => {
     fetchJobs(currentPage, searchTerm, locationFilter);
-  }, [currentPage]);
+  }, [currentPage, showSavedOnly]); // Trigger re-feth when filter mode changes
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -130,23 +176,89 @@ const JobPortal = () => {
     }
   };
 
-  const toggleSaveJob = (jobId) => {
+  useEffect(() => {
+    const fetchSavedJobs = async () => {
+      if (!user?.token) return;
+
+      console.log('Fetching initial saved jobs list with token:', user.token);
+
+      try {
+        const response = await fetch(`${baseURL}/users/saved-jobs`, {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          // Store only IDs for easier checking
+          setSavedJobs(data.data.map(job => typeof job === 'object' ? job._id : job));
+        }
+      } catch (error) {
+        console.error("Error fetching saved jobs:", error);
+      }
+    };
+
+    fetchSavedJobs();
+  }, [user?.token, baseURL]);
+
+  const toggleSaveJob = async (jobId) => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
+
+    const isSaved = savedJobs.includes(jobId);
+
+    // Optimistic update
     setSavedJobs((prev) =>
-      prev.includes(jobId)
+      isSaved
         ? prev.filter((id) => id !== jobId)
         : [...prev, jobId]
     );
+
+    try {
+      const url = `${baseURL}/users/saved-jobs${isSaved ? `/${jobId}` : ''}`;
+      const method = isSaved ? 'DELETE' : 'POST';
+      const body = isSaved ? undefined : JSON.stringify({ jobId });
+
+      console.log(`Toggling saved job. Method: ${method}, URL: ${url}, Token: ${user.token}`);
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user.token}`
+        },
+        body
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(isSaved ? "Job removed from saved jobs" : "Job saved successfully", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } else {
+        throw new Error(data.message || "Failed to update saved job");
+      }
+    } catch (error) {
+      console.error("Error toggling saved job:", error);
+      toast.error(error.message || "Failed to save job");
+      // Revert optimistic update
+      setSavedJobs((prev) =>
+        isSaved
+          ? [...prev, jobId]
+          : prev.filter((id) => id !== jobId)
+      );
+    }
   };
 
   const handleRetry = () => {
     fetchJobs(currentPage, searchTerm, locationFilter);
   };
 
- 
+
   const handleLogin = (userData) => {
     setUser({
       name: userData.name,
@@ -163,14 +275,14 @@ const JobPortal = () => {
   };
 
   const handleLogout = () => {
-   
+
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
- 
+
+
     setUser(null);
     setSavedJobs([]);
-    
+
     console.log('User logged out successfully');
   };
 
@@ -222,14 +334,14 @@ const JobPortal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-     
+
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onLogin={handleLogin} 
+        onLogin={handleLogin}
       />
 
-      
+
       <Navbar
         user={user}
         onLogout={handleLogout}
@@ -237,7 +349,7 @@ const JobPortal = () => {
         onHomeClick={handleHomeClick}
       />
 
-      
+
       <HeroSection
         searchTerm={searchTerm}
         locationFilter={locationFilter}
@@ -247,14 +359,14 @@ const JobPortal = () => {
         onKeyPress={handleKeyPress}
       />
 
-  
+
       <StatsSection
         totalJobs={totalJobs}
         uniqueCompanies={new Set(jobs.map((j) => j.company)).size}
         savedJobs={savedJobs.length}
       />
 
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -274,13 +386,30 @@ const JobPortal = () => {
               <span className="font-medium">Filters</span>
             </button> */}
 
+            {user && (
+              <button
+                onClick={() => {
+                  // This is a simple toggle filter, strict logic would need more state management
+                  // For now, let's just toggle a local 'showSavedOnly' state if I had added it.
+                  // Since I didn't add it in the previous step, I will add the state in the next step or just notify user.
+                  // Actually, I'll add the state variable in the next tool call.
+                  setShowSavedOnly(!showSavedOnly);
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center space-x-2 transition-colors border px-4 py-2 rounded-lg ${showSavedOnly ? 'text-blue-600 border-blue-600 bg-blue-50' : 'text-slate-700 border-slate-300 hover:border-blue-600 hover:text-blue-600'}`}
+              >
+                <span className="font-medium">Saved Jobs</span>
+              </button>
+            )
+            }
+
             <div className="text-sm text-slate-600">
               Page {currentPage} of {totalPages}
             </div>
           </div>
         </div>
 
-      
+
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
@@ -306,7 +435,7 @@ const JobPortal = () => {
           </div>
         )}
 
-       
+
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -353,11 +482,10 @@ const JobPortal = () => {
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`w-9 h-9 rounded-lg font-medium transition-all ${
-                            currentPage === pageNum
-                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                              : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                          }`}>
+                          className={`w-9 h-9 rounded-lg font-medium transition-all ${currentPage === pageNum
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                            : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                            }`}>
                           {pageNum}
                         </button>
                       )
@@ -398,9 +526,8 @@ const JobPortal = () => {
                 </h3>
                 <p className="text-slate-600 mb-4">
                   {searchTerm || locationFilter
-                    ? `No results for "${searchTerm}"${
-                        locationFilter ? ` in "${locationFilter}"` : ""
-                      }`
+                    ? `No results for "${searchTerm}"${locationFilter ? ` in "${locationFilter}"` : ""
+                    }`
                     : "No jobs available at the moment."}
                 </p>
                 <button

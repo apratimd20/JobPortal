@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express'
 import connectDB from './config/db.js';
 import { fetchJobsFromAPI } from './services/fetchJobs.js';
@@ -45,6 +46,7 @@ app.get("/", (req, res) => {
 
 app.use('/api/jobs', jobRoutes);
 app.use('/api/auth', userRoutes);
+app.use('/api/users', userRoutes);
 
 app.listen(Port, () => {
   console.log("Server is running on the port 5000");
