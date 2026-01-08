@@ -32,7 +32,7 @@ const LandingPage = () => {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
             {/* Navigation */}
             <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-20 border-b border-slate-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center space-x-3">
                             <img src="/images/logo.png" alt="CareerConnect Logo" className="h-12 w-auto object-contain" />
@@ -52,7 +52,7 @@ const LandingPage = () => {
 
             {/* Hero Section */}
             <section className="relative overflow-hidden py-20 sm:py-28">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className=" mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-6 leading-tight">
                             Find Your Dream Job
@@ -105,7 +105,7 @@ const LandingPage = () => {
 
             {/* Features Section */}
             <section id="features" className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
                             Everything You Need
@@ -189,7 +189,7 @@ const LandingPage = () => {
 
             {/* Footer */}
             <footer className="bg-slate-900 text-slate-300 py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col md:flex-row justify-between items-center">
                         <div className="flex items-center space-x-3 mb-4 md:mb-0">
                             <div className="bg-white p-1 rounded-lg">
