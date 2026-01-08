@@ -25,11 +25,9 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
             className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group"
             onClick={onHomeClick}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-              <Briefcase className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </div>
+            <img src="/images/logo.png" alt="Logo" className="h-10 w-auto group-hover:scale-110 transition-transform" />
             <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              JobPortal
+              {/* CareerConnect */}
             </span>
           </div>
 

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import AuthModal from "./components/AuthModal";
+import LogoutConfirmModal from "./components/LogoutConfirmModal";
 import JobCard from "./components/JobCard";
 import StatsSection from "./components/StatsSection";
 
@@ -18,11 +19,11 @@ const JobPortal = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
   const [user, setUser] = useState(() => {
-
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
   const baseURL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
@@ -274,16 +275,25 @@ const JobPortal = () => {
     setShowAuthModal(false);
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
 
+  const handleLogoutConfirm = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('role');
 
+   
 
     setUser(null);
     setSavedJobs([]);
-
-    console.log('User logged out successfully');
+    setShowLogoutConfirm(false);
+    window.location.href = '/';
+     toast.success('Logged out successfully', {
+      position: "top-right",
+      autoClose: 2000,
+    });
   };
 
   const handleApplyJob = (job) => {
@@ -298,6 +308,7 @@ const JobPortal = () => {
     setCurrentPage(1);
     setSearchTerm("");
     setLocationFilter("");
+    setShowSavedOnly(false);
     fetchJobs(1);
   };
 
@@ -341,10 +352,15 @@ const JobPortal = () => {
         onLogin={handleLogin}
       />
 
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogoutConfirm}
+      />
 
       <Navbar
         user={user}
-        onLogout={handleLogout}
+        onLogout={handleLogoutClick}
         onLoginClick={() => setShowAuthModal(true)}
         onHomeClick={handleHomeClick}
       />

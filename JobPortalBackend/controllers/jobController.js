@@ -311,3 +311,19 @@ export const advancedSearch = async (req, res) => {
     });
   }
 };
+
+
+export const postJob = async (req, res)=>{
+  try{
+    
+
+  }
+  catch(error){
+    console.error('Post job error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while posting job',
+      error: error.message
+    });
+  }
+}

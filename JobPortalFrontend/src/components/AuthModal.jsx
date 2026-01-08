@@ -3,25 +3,25 @@ import { X, Mail, Lock, User, Loader2, Eye, EyeOff, Briefcase, Search } from 'lu
 import { toast } from 'react-toastify';
 
 const AuthModal = ({ isOpen, onClose, onLogin }) => {
-  const [activeTab, setActiveTab] = useState('login'); 
-  const [userType, setUserType] = useState('jobSeeker'); 
+  const [activeTab, setActiveTab] = useState('login');
+  const [userType, setUserType] = useState('jobSeeker');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-  
+
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
   });
-  
+
   const [jobSeekerForm, setJobSeekerForm] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-  
+
   const [jobProviderForm, setJobProviderForm] = useState({
     companyName: '',
     email: '',
@@ -33,7 +33,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     industry: '',
     website: '',
   });
-  
+
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
 
@@ -43,17 +43,17 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     e.preventDefault();
     setLoading(true);
     setLoginError('');
-    
+
     if (!loginForm.email || !loginForm.password) {
       setLoginError('Please fill in all fields');
       setLoading(false);
       return;
     }
-    
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
+
       const response = await fetch(`${baseURL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -65,36 +65,38 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+      // console.log('Login response:', result);
+
       if (!result.success) {
         throw new Error(result.message || 'Login failed');
       }
-      
+
       const userData = result.data;
-      
+
       localStorage.setItem('token', userData.token);
+      localStorage.setItem('role', userData.role);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       const frontendUserData = {
         name: userData.name,
         email: userData.email,
         userType: userData.role,
-        initials: userData.name 
+        initials: userData.name
           ? userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
           : 'U',
         token: userData.token,
         _id: userData._id
       };
-      
+
       toast.success(`Welcome back, ${userData.name}!`, {
         position: "top-right",
         autoClose: 3000,
@@ -103,12 +105,21 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         pauseOnHover: true,
         draggable: true,
       });
-      
+
       onLogin(frontendUserData);
-      
+
       clearForms();
       onClose();
-      
+
+      // Redirect to appropriate dashboard based on role
+      setTimeout(() => {
+        if (userData.role === 'jobseeker') {
+          window.location.href = '/dashboard/seeker';
+        } else if (userData.role === 'jobprovider') {
+          window.location.href = '/dashboard/provider';
+        }
+      }, 500);
+
     } catch (error) {
       if (error.name === 'AbortError') {
         setLoginError('Request timeout. Please check your connection and try again.');
@@ -119,7 +130,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       } else {
         setLoginError(error.message || 'Login failed. Please check your credentials and try again.');
       }
-      
+
       toast.error(error.message || 'Login failed. Please check your credentials.', {
         position: "top-right",
         autoClose: 4000,
@@ -137,52 +148,52 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     e.preventDefault();
     setLoading(true);
     setRegisterError('');
-    
+
     try {
       let userData;
       let additionalData = {};
-      
+
       if (userType === 'jobSeeker') {
         if (!jobSeekerForm.name || !jobSeekerForm.email || !jobSeekerForm.password || !jobSeekerForm.confirmPassword) {
           throw new Error('Please fill in all required fields');
         }
-        
+
         if (jobSeekerForm.password !== jobSeekerForm.confirmPassword) {
           throw new Error('Passwords do not match');
         }
-        
+
         if (jobSeekerForm.password.length < 6) {
           throw new Error('Password must be at least 6 characters');
         }
-        
+
         userData = {
           name: jobSeekerForm.name,
           email: jobSeekerForm.email,
           password: jobSeekerForm.password,
           role: 'jobseeker'
         };
-        
+
       } else {
-        if (!jobProviderForm.companyName || !jobProviderForm.email || !jobProviderForm.password || 
-            !jobProviderForm.confirmPassword || !jobProviderForm.contactPerson) {
+        if (!jobProviderForm.companyName || !jobProviderForm.email || !jobProviderForm.password ||
+          !jobProviderForm.confirmPassword || !jobProviderForm.contactPerson) {
           throw new Error('Please fill in all required fields');
         }
-        
+
         if (jobProviderForm.password !== jobProviderForm.confirmPassword) {
           throw new Error('Passwords do not match');
         }
-        
+
         if (jobProviderForm.password.length < 6) {
           throw new Error('Password must be at least 6 characters');
         }
-        
+
         userData = {
           name: jobProviderForm.companyName,
           email: jobProviderForm.email,
           password: jobProviderForm.password,
           role: 'jobprovider'
         };
-        
+
         additionalData = {
           companyName: jobProviderForm.companyName,
           contactPerson: jobProviderForm.contactPerson,
@@ -192,10 +203,10 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           website: jobProviderForm.website
         };
       }
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      
+
       const response = await fetch(`${baseURL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -204,25 +215,26 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         body: JSON.stringify(userData),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.message || 'Registration failed');
       }
-      
+
       let registeredUser = result.data;
-      
+
       localStorage.setItem('token', registeredUser.token);
+      localStorage.setItem('role', registeredUser.role);
       localStorage.setItem('user', JSON.stringify(registeredUser));
-      
+
       if (userType === 'jobProvider' && Object.keys(additionalData).length > 0) {
         try {
           const updateResponse = await fetch(`${baseURL}/auth/update-profile/${registeredUser._id}`, {
@@ -233,7 +245,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             },
             body: JSON.stringify(additionalData),
           });
-          
+
           if (updateResponse.ok) {
             const updateData = await updateResponse.json();
             if (updateData.success) {
@@ -246,23 +258,23 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
           console.warn('Could not save additional profile data:', updateError);
         }
       }
-      
+
       const frontendUserData = {
         name: registeredUser.name,
         email: registeredUser.email,
         userType: registeredUser.role,
-        initials: registeredUser.name 
+        initials: registeredUser.name
           ? registeredUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
           : 'U',
         token: registeredUser.token,
         _id: registeredUser._id,
         ...(userType === 'jobProvider' ? additionalData : {})
       };
-      
-      const successMessage = userType === 'jobSeeker' 
-        ? `Welcome to JobPortal, ${registeredUser.name}! Your job seeker account has been created successfully.`
-        : `Welcome to JobPortal, ${registeredUser.name}! Your job provider account has been created successfully.`;
-      
+
+      const successMessage = userType === 'jobSeeker'
+        ? `Welcome to CareerConnect, ${registeredUser.name}! Your job seeker account has been created successfully.`
+        : `Welcome to CareerConnect, ${registeredUser.name}! Your job provider account has been created successfully.`;
+
       toast.success(successMessage, {
         position: "top-right",
         autoClose: 4000,
@@ -271,12 +283,21 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         pauseOnHover: true,
         draggable: true,
       });
-      
+
       onLogin(frontendUserData);
-      
+
       clearForms();
       onClose();
-      
+
+      // Redirect to appropriate dashboard based on role
+      setTimeout(() => {
+        if (registeredUser.role === 'jobseeker') {
+          window.location.href = '/dashboard/seeker';
+        } else if (registeredUser.role === 'jobprovider') {
+          window.location.href = '/dashboard/provider';
+        }
+      }, 500);
+
     } catch (error) {
       if (error.name === 'AbortError') {
         setRegisterError('Request timeout. Please check your connection and try again.');
@@ -287,7 +308,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
       } else {
         setRegisterError(error.message || 'Registration failed. Please try again.');
       }
-      
+
       toast.error(error.message || 'Registration failed. Please try again.', {
         position: "top-right",
         autoClose: 5000,
@@ -303,10 +324,10 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
 
   const clearForms = () => {
     setLoginForm({ email: '', password: '' });
-    setJobSeekerForm({ 
-      name: '', 
-      email: '', 
-      password: '', 
+    setJobSeekerForm({
+      name: '',
+      email: '',
+      password: '',
       confirmPassword: ''
     });
     setJobProviderForm({
@@ -340,34 +361,32 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         >
           <X className="h-5 w-5" />
         </button>
-        
+
         <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
-          Welcome to JobPortal
+          Welcome to CareerConnect
         </h2>
-        
+
         <div className="flex mb-6 border-b border-slate-200">
           <button
             onClick={() => setActiveTab('login')}
-            className={`flex-1 py-3 font-medium text-sm transition-colors ${
-              activeTab === 'login'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
+            className={`flex-1 py-3 font-medium text-sm transition-colors ${activeTab === 'login'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-slate-600 hover:text-slate-800'
+              }`}
           >
             Login
           </button>
           <button
             onClick={() => setActiveTab('register')}
-            className={`flex-1 py-3 font-medium text-sm transition-colors ${
-              activeTab === 'register'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
+            className={`flex-1 py-3 font-medium text-sm transition-colors ${activeTab === 'register'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-slate-600 hover:text-slate-800'
+              }`}
           >
             Register
           </button>
         </div>
-        
+
         <div className="mb-6">
           <label className="block text-sm font-medium text-slate-700 mb-2 text-left">
             I am a:
@@ -376,11 +395,10 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             <button
               type="button"
               onClick={() => setUserType('jobSeeker')}
-              className={`flex items-center justify-center p-3 border rounded-lg transition-all ${
-                userType === 'jobSeeker'
-                  ? 'border-blue-600 bg-blue-50 text-blue-600'
-                  : 'border-slate-300 hover:border-slate-400'
-              }`}
+              className={`flex items-center justify-center p-3 border rounded-lg transition-all ${userType === 'jobSeeker'
+                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                : 'border-slate-300 hover:border-slate-400'
+                }`}
             >
               <Search className="h-5 w-5 mr-2" />
               Job Seeker
@@ -388,18 +406,17 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             <button
               type="button"
               onClick={() => setUserType('jobProvider')}
-              className={`flex items-center justify-center p-3 border rounded-lg transition-all ${
-                userType === 'jobProvider'
-                  ? 'border-blue-600 bg-blue-50 text-blue-600'
-                  : 'border-slate-300 hover:border-slate-400'
-              }`}
+              className={`flex items-center justify-center p-3 border rounded-lg transition-all ${userType === 'jobProvider'
+                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                : 'border-slate-300 hover:border-slate-400'
+                }`}
             >
               <Briefcase className="h-5 w-5 mr-2" />
               Job Provider
             </button>
           </div>
         </div>
-        
+
         {activeTab === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             {loginError && (
@@ -407,7 +424,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 {loginError}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Email Address
@@ -417,14 +434,14 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="email"
                   value={loginForm.email}
-                  onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="you@example.com"
                   disabled={loading}
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Password
@@ -434,7 +451,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={loginForm.password}
-                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                   className="w-full pl-10 pr-12 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="••••••••"
                   disabled={loading}
@@ -448,7 +465,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 </button>
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -463,7 +480,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 'Sign In'
               )}
             </button>
-            
+
             <div className="text-center">
               <button
                 type="button"
@@ -475,7 +492,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             </div>
           </form>
         )}
-        
+
         {activeTab === 'register' && userType === 'jobSeeker' && (
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             {registerError && (
@@ -483,7 +500,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 {registerError}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Full Name *
@@ -493,7 +510,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="text"
                   value={jobSeekerForm.name}
-                  onChange={(e) => setJobSeekerForm({...jobSeekerForm, name: e.target.value})}
+                  onChange={(e) => setJobSeekerForm({ ...jobSeekerForm, name: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="John Doe"
                   disabled={loading}
@@ -501,7 +518,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Email Address *
@@ -511,7 +528,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="email"
                   value={jobSeekerForm.email}
-                  onChange={(e) => setJobSeekerForm({...jobSeekerForm, email: e.target.value})}
+                  onChange={(e) => setJobSeekerForm({ ...jobSeekerForm, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="you@example.com"
                   disabled={loading}
@@ -519,7 +536,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Password *
@@ -529,7 +546,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={jobSeekerForm.password}
-                  onChange={(e) => setJobSeekerForm({...jobSeekerForm, password: e.target.value})}
+                  onChange={(e) => setJobSeekerForm({ ...jobSeekerForm, password: e.target.value })}
                   className="w-full pl-10 pr-12 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="••••••••"
                   disabled={loading}
@@ -547,7 +564,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 Must be at least 6 characters
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Confirm Password *
@@ -557,7 +574,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={jobSeekerForm.confirmPassword}
-                  onChange={(e) => setJobSeekerForm({...jobSeekerForm, confirmPassword: e.target.value})}
+                  onChange={(e) => setJobSeekerForm({ ...jobSeekerForm, confirmPassword: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="••••••••"
                   disabled={loading}
@@ -565,7 +582,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -580,7 +597,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 'Create Job Seeker Account'
               )}
             </button>
-            
+
             <div className="text-center">
               <button
                 type="button"
@@ -592,7 +609,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
             </div>
           </form>
         )}
-        
+
         {activeTab === 'register' && userType === 'jobProvider' && (
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             {registerError && (
@@ -600,7 +617,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 {registerError}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Company Name *
@@ -610,7 +627,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="text"
                   value={jobProviderForm.companyName}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, companyName: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, companyName: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="Acme Inc."
                   disabled={loading}
@@ -618,7 +635,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Contact Person Name *
@@ -628,7 +645,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="text"
                   value={jobProviderForm.contactPerson}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, contactPerson: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, contactPerson: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="John Doe"
                   disabled={loading}
@@ -636,7 +653,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Email Address *
@@ -646,7 +663,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="email"
                   value={jobProviderForm.email}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, email: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="contact@company.com"
                   disabled={loading}
@@ -654,7 +671,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Phone Number
@@ -663,14 +680,14 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="tel"
                   value={jobProviderForm.phone}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, phone: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, phone: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="+1 (555) 123-4567"
                   disabled={loading}
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
@@ -678,7 +695,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 </label>
                 <select
                   value={jobProviderForm.companySize}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, companySize: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, companySize: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   disabled={loading}
                 >
@@ -690,7 +707,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   <option value="500+">500+ employees</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                   Industry
@@ -698,14 +715,14 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="text"
                   value={jobProviderForm.industry}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, industry: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, industry: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="e.g., Technology, Healthcare"
                   disabled={loading}
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Website
@@ -714,14 +731,14 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type="url"
                   value={jobProviderForm.website}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, website: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, website: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="https://company.com"
                   disabled={loading}
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Password *
@@ -731,7 +748,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={jobProviderForm.password}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, password: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, password: e.target.value })}
                   className="w-full pl-10 pr-12 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="••••••••"
                   disabled={loading}
@@ -749,7 +766,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 Must be at least 6 characters
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1 text-left">
                 Confirm Password *
@@ -759,7 +776,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={jobProviderForm.confirmPassword}
-                  onChange={(e) => setJobProviderForm({...jobProviderForm, confirmPassword: e.target.value})}
+                  onChange={(e) => setJobProviderForm({ ...jobProviderForm, confirmPassword: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="••••••••"
                   disabled={loading}
@@ -767,7 +784,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 />
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -782,7 +799,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 'Create Job Provider Account'
               )}
             </button>
-            
+
             <div className="text-center">
               <button
                 type="button"
