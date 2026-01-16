@@ -63,11 +63,10 @@ const jobSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-     expiresAt: { 
-      type: Date,
-      expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      index: { expires: 0 } 
-    }
+    expiresAt: {
+  type: Date,
+  index: { expires: "3d" }
+}
   },
   
   { timestamps: true }

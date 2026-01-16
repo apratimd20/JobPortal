@@ -27,7 +27,7 @@ export const fetchJobsFromAPI = async () => {
 
     for (let job of jobs) {
       try {
-        
+
         const exists = await Job.findOne({ job_id: job.job_id });
         if (exists) {
           console.log(`⏭️ Skipping existing job: ${job.job_title}`);
@@ -37,7 +37,7 @@ export const fetchJobsFromAPI = async () => {
           const typeMap = {
             'full-time': 'Full-Time',
             'fulltime': 'Full-Time',
-            'part-time': 'Part-Time', 
+            'part-time': 'Part-Time',
             'parttime': 'Part-Time',
             'contract': 'Contract',
             'contractor': 'Contract',
@@ -48,10 +48,10 @@ export const fetchJobsFromAPI = async () => {
           return typeMap[apiJobType?.toLowerCase()] || 'Full-Time';
         };
 
-        
+
         const extractExperience = (description) => {
           if (!description) return "Not specified";
-          
+
           const desc = description.toLowerCase();
           if (desc.includes('senior') || desc.includes('5+ years') || desc.includes('5 years') || desc.includes('7+ years')) {
             return "Senior Level";
@@ -65,7 +65,7 @@ export const fetchJobsFromAPI = async () => {
           return "Not specified";
         };
 
-        
+
         await Job.create({
           job_id: job.job_id,
           title: job.job_title || "Not provided",
@@ -73,7 +73,7 @@ export const fetchJobsFromAPI = async () => {
           location: job.job_city || job.job_country || "Remote",
           description: job.job_description || "No description",
           jobType: mapJobType(job.job_employment_type),
-          experience: extractExperience(job.job_description), 
+          experience: extractExperience(job.job_description),
           salary: job.job_salary || "Not specified",
           skills: job.job_required_skills || [],
           scraped: true,
@@ -83,7 +83,7 @@ export const fetchJobsFromAPI = async () => {
 
         storedCount++;
         console.log(` Stored: ${job.job_title} at ${job.employer_name}`);
-        
+
       } catch (error) {
         errorCount++;
         console.error(` Error storing job (${job.job_id}):`, error.message);
@@ -101,8 +101,14 @@ export const fetchJobsFromAPI = async () => {
   } catch (error) {
     console.error("❌ [SERVICE ERROR] Failed to fetch jobs:", {
       message: error.message,
+      stack: error.stack,
+      response: error.response ? {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      } : 'No response data',
       time: new Date().toISOString(),
     });
-    throw error; 
+    throw error;
   }
 };

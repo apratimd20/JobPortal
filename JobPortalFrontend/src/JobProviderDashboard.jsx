@@ -52,7 +52,7 @@ const JobProviderDashboard = ({ user, onLogout }) => {
     title: '',
     company: user?.name || user?.companyName || '',
     location: '',
-    type: 'Full-time',
+    type: 'Full-Time',
     salary: '',
     description: '',
     requirements: '',
@@ -123,8 +123,11 @@ const JobProviderDashboard = ({ user, onLogout }) => {
         requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
         responsibilities: jobForm.responsibilities.split('\n').filter(r => r.trim()),
         benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
-        skills: jobForm.skills.split(',').map(s => s.trim()).filter(s => s)
+        skills: jobForm.skills.split(',').map(s => s.trim()).filter(s => s),
+        jobType: jobForm.type, // Map type to jobType for backend
       };
+      // Remove type from jobData as backend expects jobType
+      delete jobData.type;
 
       const url = selectedJob
         ? `${baseURL}/jobs/${selectedJob._id}`
@@ -242,7 +245,7 @@ const JobProviderDashboard = ({ user, onLogout }) => {
       title: '',
       company: user?.name || user?.companyName || '',
       location: '',
-      type: 'Full-time',
+      type: 'Full-Time',
       salary: '',
       description: '',
       requirements: '',
@@ -719,11 +722,12 @@ const JobProviderDashboard = ({ user, onLogout }) => {
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
+                    <option value="Full-Time">Full-Time</option>
+                    <option value="Part-Time">Part-Time</option>
                     <option value="Contract">Contract</option>
                     <option value="Internship">Internship</option>
                     <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
                   </select>
                 </div>
 

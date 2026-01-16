@@ -55,3 +55,14 @@ export const authorizeRoles = (...roles) => {
     next();
   };
 };
+
+export const providerOnly = (req, res, next) => {
+  if (req.user.role !== "jobprovider") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied"
+    });
+  }
+  next();
+};
+

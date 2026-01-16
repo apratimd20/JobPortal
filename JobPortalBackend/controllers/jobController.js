@@ -1,4 +1,5 @@
 import Job from "../models/Job.js";
+import crypto from "crypto";
 
 
 export const getAllJobs = async (req, res) => {
@@ -14,10 +15,10 @@ export const getAllJobs = async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
-   
+
     let filter = {};
 
-   
+
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -27,7 +28,7 @@ export const getAllJobs = async (req, res) => {
       ];
     }
 
- 
+
     if (location) {
       filter.location = { $regex: location, $options: 'i' };
     }
@@ -36,23 +37,23 @@ export const getAllJobs = async (req, res) => {
       filter.jobType = jobType;
     }
 
-    
+
     if (experience) {
       filter.experience = experience;
     }
 
-   
+
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    
+
     const jobs = await Job.find(filter)
       .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .select('-__v'); 
+      .select('-__v');
 
-  
+
     const total = await Job.countDocuments(filter);
 
     res.status(200).json({
@@ -68,6 +69,50 @@ export const getAllJobs = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching jobs',
+      error: error.message
+    });
+  }
+};
+
+export const getProviderJobs = async (req, res) => {
+  try {
+    const jobs = await Job.find({ postedBy: req.user.id })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: jobs
+    });
+  } catch (error) {
+    console.error('Get provider jobs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching provider jobs',
+      error: error.message
+    });
+  }
+};
+
+export const getProviderStats = async (req, res) => {
+  try {
+    const jobs = await Job.find({ postedBy: req.user.id });
+
+    const stats = {
+      totalJobs: jobs.length,
+      activeJobs: jobs.filter(job => job.status === 'active').length,
+      totalApplicants: jobs.reduce((acc, job) => acc + (job.applicants?.length || 0), 0),
+      viewsThisMonth: jobs.reduce((acc, job) => acc + (job.views || 0), 0)
+    };
+
+    res.status(200).json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Get provider stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching provider stats',
       error: error.message
     });
   }
@@ -91,7 +136,7 @@ export const getJobById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get job by ID error:', error);
-    
+
     if (error.name === 'CastError') {
       return res.status(400).json({
         success: false,
@@ -113,15 +158,15 @@ export const getJobsByCompany = async (req, res) => {
     const { company } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
-    const jobs = await Job.find({ 
-      company: { $regex: company, $options: 'i' } 
+    const jobs = await Job.find({
+      company: { $regex: company, $options: 'i' }
     })
-    .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
 
-    const total = await Job.countDocuments({ 
-      company: { $regex: company, $options: 'i' } 
+    const total = await Job.countDocuments({
+      company: { $regex: company, $options: 'i' }
     });
 
     res.status(200).json({
@@ -146,7 +191,7 @@ export const getJobsByCompany = async (req, res) => {
 export const getJobLocations = async (req, res) => {
   try {
     const locations = await Job.distinct('location');
-    
+
     res.status(200).json({
       success: true,
       count: locations.length,
@@ -166,7 +211,7 @@ export const getJobLocations = async (req, res) => {
 export const getJobTypes = async (req, res) => {
   try {
     const jobTypes = await Job.distinct('jobType');
-    
+
     res.status(200).json({
       success: true,
       count: jobTypes.length,
@@ -187,7 +232,7 @@ export const getJobTypes = async (req, res) => {
 export const getExperienceLevels = async (req, res) => {
   try {
     const experiences = await Job.distinct('experience');
-    
+
     res.status(200).json({
       success: true,
       count: experiences.length,
@@ -256,28 +301,28 @@ export const advancedSearch = async (req, res) => {
       ];
     }
 
-    
+
     if (location) {
       filter.location = { $regex: location, $options: 'i' };
     }
 
-    
+
     if (jobType) {
       filter.jobType = jobType;
     }
 
-    
+
     if (experience) {
       filter.experience = experience;
     }
 
-   
+
     if (skills) {
       const skillsArray = skills.split(',').map(skill => skill.trim());
       filter.skills = { $in: skillsArray.map(skill => new RegExp(skill, 'i')) };
     }
 
-    
+
     if (minSalary || maxSalary) {
       filter.salary = {};
       if (minSalary) filter.salary.$gte = minSalary;
@@ -313,12 +358,55 @@ export const advancedSearch = async (req, res) => {
 };
 
 
-export const postJob = async (req, res)=>{
-  try{
-    
+export const postJob = async (req, res) => {
+  try {
+    const {
+      title,
+      company,
+      location,
+      jobType,
+      experience,
+      salary,
+      description,
+      skills
+
+    } = req.body;
+    if (!title || !company || !location || !jobType || !experience || !salary || !description || !skills) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+    }
+    const JobId = crypto.randomBytes(8).toString('hex');
+    const job = await Job.create({
+      job_id: JobId,
+      title,
+      company,
+      location,
+      jobType,
+      experience,
+      salary,
+      description,
+      skills,
+      postedBy: req.user.id,
+      scraped: false
+    })
+    if (job) {
+      return res.status(200).json({
+        success: true,
+        message: 'Job posted successfully',
+        job
+      })
+    }
+    else {
+      return res.status(400).json({
+        success: false,
+        message: 'Job posting failed'
+      })
+    }
 
   }
-  catch(error){
+  catch (error) {
     console.error('Post job error:', error);
     res.status(500).json({
       success: false,
