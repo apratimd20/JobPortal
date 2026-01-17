@@ -6,7 +6,7 @@ import {
     Building2,
     Bookmark,
     ArrowLeft,
-    DollarSign,
+    IndianRupee,
     Calendar,
     Users,
     Briefcase,
@@ -303,7 +303,7 @@ const JobDetails = () => {
                                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200">
                                     <div className="flex items-center space-x-3">
                                         <div className="bg-green-100 p-2 rounded-lg">
-                                            <DollarSign className="h-5 w-5 text-green-600" />
+                                            <IndianRupee className="h-5 w-5 text-green-600" />
                                         </div>
                                         <div>
                                             <p className="text-xs text-green-600 font-medium">Salary</p>

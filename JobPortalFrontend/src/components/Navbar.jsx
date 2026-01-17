@@ -38,8 +38,16 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                   className="flex items-center space-x-2 focus:outline-none hover:opacity-80 transition-opacity"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                    {user.initials}
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden border-2 border-white shadow-sm">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:5000${user.avatarUrl}`}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user.initials
+                    )}
                   </div>
                   <span className="font-medium text-slate-700 hidden lg:inline">
                     {user.name}
@@ -50,8 +58,16 @@ const Navbar = ({ user, onLogout, onLoginClick, onHomeClick }) => {
                   <div className="absolute right-0 mt-2 w-72 sm:w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 z-10">
                     <div className="px-4 py-3 border-b border-slate-100">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                          {user.initials}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden border-2 border-white shadow-sm">
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:5000${user.avatarUrl}`}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            user.initials
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-800 truncate">{user.name}</p>

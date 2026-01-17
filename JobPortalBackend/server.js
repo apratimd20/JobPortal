@@ -15,6 +15,7 @@ const Port = 5000;
 await connectDB();
 
 app.use(express.json());
+app.use('/uploads', express.static('public/uploads'));
 
 
 const allowedOrigins = [

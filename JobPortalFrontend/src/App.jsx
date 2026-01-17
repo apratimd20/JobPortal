@@ -5,6 +5,7 @@ import LandingPage from './components/LandingPage.jsx';
 import LogoutConfirmModal from './components/LogoutConfirmModal.jsx';
 import JobPortal from './JobPortal.jsx';
 import JobProviderDashboard from './JobProviderDashboard.jsx';
+import JobSeekerDashboard from './JobSeekerDashboard.jsx';
 import JobDetails from './components/JobDetails.jsx';
 import SavedJobs from './components/SavedJobs.jsx';
 import Profile from './components/Profile.jsx';
